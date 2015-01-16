@@ -79,7 +79,6 @@ func matching(name string) bool {
 	if namePattern != nil && *namePattern != "" {
 		match, err := filepath.Match(*namePattern, name)
 		return match || err != nil
-	} else {
-		return true
 	}
+	return true
 }
