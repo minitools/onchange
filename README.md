@@ -1,4 +1,5 @@
-# onchange
+onchange [![Build Status](https://travis-ci.org/minitools/onchange.svg?branch=master)](https://travis-ci.org/minitools/onchange)
+========
 
 Monitors changes to files in local directory and executes a command on each change event.
 
