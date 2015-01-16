@@ -14,7 +14,7 @@ For example, to rebuild a Go project every time a local file has changed:
 
 To upload a binary to a remote machine, every time it's built:
 
-```$ onchange -name some_app scp some_app $(target)```
+```$ onchange -name some_app scp some_app ${target}```
 
 To Do
 ----
