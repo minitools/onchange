@@ -11,18 +11,21 @@ import (
 	"log"
 	"os/exec"
 	"path/filepath"
+	"time"
 
-	"github.com/go-fsnotify/fsnotify"
+	"github.com/fsnotify/fsnotify"
 )
 
 var (
-	verboseFlag = flag.Bool("v", false, "Verbose output")
-	namePattern = flag.String("name", "", "Only detect changes on files matching this pattern. For example, -name \"*.go\"")
-	opFilter    = fsnotify.Create | fsnotify.Write | fsnotify.Remove | fsnotify.Rename
+	verboseFlag  = flag.Bool("v", false, "Verbose output")
+	namePattern  = flag.String("name", "", "Only detect changes on files matching this pattern. For example, -name \"*.go\"")
+	opFilter     = fsnotify.Create | fsnotify.Write | fsnotify.Remove | fsnotify.Rename
+	quietTimeSec = flag.Float64("quiet", 5.0, "Quiet time after an execution, in seconds")
 )
 
 func main() {
 	flag.Parse()
+
 	if *namePattern != "" {
 		log.Println("Filtering on name pattern '" + *namePattern + "'")
 	}
@@ -34,10 +37,21 @@ func main() {
 	defer watcher.Close()
 
 	done := make(chan bool)
+
 	go func() {
+		var lastTime time.Time
+		quietInterval := time.Duration(time.Duration(*quietTimeSec*1000) * time.Millisecond)
+		log.Println("Quiet period: ", quietInterval)
 		for {
 			select {
 			case event := <-watcher.Events:
+				if time.Since(lastTime) < quietInterval {
+					if *verboseFlag {
+						log.Println("within quiet interval, skipped event:", event, "(", event.Name, ")")
+					}
+					break // still within the quiet period
+				}
+
 				if *verboseFlag {
 					log.Println("event:", event, "(", event.Name, ")")
 				}
@@ -54,6 +68,8 @@ func main() {
 
 				args := flag.Args()
 				if len(args) > 0 {
+					log.Println("change detected...")
+					lastTime = time.Now()
 					out, err := exec.Command(args[0], args[1:]...).CombinedOutput()
 					fmt.Println(string(out))
 					if err != nil {
